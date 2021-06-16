@@ -1,29 +1,31 @@
 import numpy as np
 import Activation as ac
+import matplotlib.pyplot as plt
+from DatasetLoader import DatasetLoader
 
 
 class NewerNeuralNetwork:
-    def __init__(self, input_size, hidden_size, output_size, std = 1e-4):
+    def __init__(self, input_size, hidden_size, output_size, std=1e-4):
         np.random.seed(1)
 
         self.params = {}
         self.params['W1'] = np.random.randn(input_size, hidden_size) * std
         self.params['b1'] = np.zeros(hidden_size)
-        self.params['W2']= np.random.randn(hidden_size, output_size) * std
+        self.params['W2'] = np.random.randn(hidden_size, output_size) * std
         self.params['b2'] = np.zeros(output_size)
 
-    @staticmethod
+     
     def _linear_forward(self, A_prev, W, b):
         Z = np.dot(A_prev, W) + b
         return Z
 
-    @staticmethod
+     
     def _linear_forward_activation(self, A_prev, W, b, activation: ac.Activation):
         Z = self._linear_forward(A_prev, W, b)
         A_curr = activation.normal(Z)
         return A_curr, Z
 
-    @staticmethod
+     
     def _forward_pass(self, X_input, params):
         # Unpack params dictionary
         W1, b1 = params['W1'], params['b1']
@@ -34,11 +36,11 @@ class NewerNeuralNetwork:
         # 2) Fully connected layer + Softmax activation function
         layers = {}
         layers['fc1_relu'], layers['fc1'] = self._linear_forward_activation(X_input, W1, b1, ac.ReLuActivation())
-        layers['fc2_softmax'], layers['fc2'] = self._linear_forward_activation(fc1_relu, W2, b2, ac.SoftmaxActivation())
+        layers['fc2_softmax'], layers['fc2'] = self._linear_forward_activation(layers['fc1_relu'], W2, b2, ac.SoftmaxActivation())
 
         return layers
 
-    @staticmethod
+     
     def _cross_entropy_loss(self, X_input, y_output, params, layers, reg=0.0):
         # Unpack params dictionary
         W1, W2 = params['W1'], params['W2']
@@ -54,7 +56,7 @@ class NewerNeuralNetwork:
 
         return loss
 
-    @staticmethod
+     
     def _backpropagate(self, X_input, y_output, params, layers, reg=0.0):
         # Unpack params dictionary
         W1, b1 = params['W1'], params['b1']
@@ -78,7 +80,7 @@ class NewerNeuralNetwork:
 
         # Gradient W1
         dhidden = np.dot(dscores, W2.T)
-        dhidden[layers['fc1_relu'] <= 0] = 0
+        dhidden[layers['fc1_relu'] <= 0] = 0 #fc1??
         grads['W1'] = np.dot(X_input.T, dhidden)
 
         # Gradient b1
@@ -96,6 +98,9 @@ class NewerNeuralNetwork:
         # Forward pass, class scores for input
         layers = self._forward_pass(X_input, self.params)
 
+        # if y_output is None:
+        #     return layers['fc2_softmax']
+
         # Cross-entropy loss (Softmax loss) and regularization
         loss = self._cross_entropy_loss(X_input, y_output, self.params, layers, reg)
 
@@ -108,8 +113,48 @@ class NewerNeuralNetwork:
                 learning_rate=1e-3, learning_rate_decay=0.95,
                 reg=1e-5, num_iters=100,
                 batch_size=200, verbose=False):
-        # TODO
-        pass
+
+        num_train = X_train.shape[0]
+        iterations_per_epoch = max(num_train / batch_size, 1)
+        # Use SGD to optimize the parameters in self.model
+        loss_history = []
+        train_acc_history = []
+        val_acc_history = []
+
+        for it in range(num_iters):
+            X_batch = None
+            y_batch = None
+
+            # Mini batch
+            sample_indices = np.random.choice(np.arange(num_train), batch_size)
+            X_batch = X_train[sample_indices]
+            y_batch = y_train[sample_indices]
+
+            # Compute loss and gradients using the current minibatch
+            loss, grads = self.loss(X_batch, y_batch, reg=reg)
+            loss_history.append(loss)
+
+            # Update params
+            self.params['W1'] += -learning_rate * grads['W1']
+            self.params['b1'] += -learning_rate * grads['b1']
+            self.params['W2'] += -learning_rate * grads['W2']
+            self.params['b2'] += -learning_rate * grads['b2']
+
+            if verbose and it % 2 == 0:
+                print(f'iteration {it} / {num_iters}: loss {loss}')
+
+            # Every epoch, check train and val accuracy and decay learning rate.
+            if it % iterations_per_epoch == 0:
+                # Check accuracy
+                train_acc = (self.predict(X_batch) == y_batch).mean()
+                val_acc = (self.predict(X_validation) == y_validation).mean()
+                train_acc_history.append(train_acc)
+                val_acc_history.append(val_acc)
+
+                # Decay learning rate
+                learning_rate *= learning_rate_decay
+
+        return {'loss_history': loss_history, 'train_acc_history': train_acc_history, 'val_acc_history': val_acc_history}
 
     def predict(self, X_input):
         # Predict score for X_input using loaded weights
@@ -125,3 +170,60 @@ class NewerNeuralNetwork:
     def load_model(self, params):
         # TODO: Add loading from file
         self.params = params
+
+
+def main():
+    DATASET_FOLDER = 'sabsi-project/datasets/'
+    DATASET_COLORS = 'colors.csv'
+    TEST_IMAGE = 'test.jpg'
+    DATASET_COLORS_LABELS = ('Red', 'Green', 'Blue', 
+                            'Yellow', 'Orange', 'Pink', 
+                            'Purple', 'Brown', 'Grey', 
+                            'Black', 'White') 
+
+    data = DatasetLoader(DATASET_FOLDER + DATASET_COLORS)
+    X_in, y_out = data.load_data()
+
+    X_train = np.array(X_in[:8000])
+    y_train = np.array(y_out[:8000])
+    X_val = np.array(X_in[8000:10000])
+    y_val = np.array(y_out[8000:10000])
+    X_test = np.array(X_in[10000:])
+    y_test = np.array(y_out[10000:])
+
+
+    nn = NewerNeuralNetwork(3, 10, len(DATASET_COLORS_LABELS))
+
+    stats = nn.train(X_train, y_train, X_val, y_val, learning_rate=7e-3, reg=1e-6, num_iters=200, verbose=False)
+
+    print('Final training loss: ', stats['loss_history'][-1])
+
+    # Predict on the training set
+    train_accuracy = (nn.predict(X_train) == y_train).mean()
+    
+    # Predict on the validation set
+    val_accuracy = (nn.predict(X_val) == y_val).mean()
+
+    print(f'train accuracy: {train_accuracy} val accuracy: {val_accuracy}')
+
+    # plot the loss history
+    plt.subplot(2, 1, 1)
+    plt.plot(stats['loss_history'])
+    plt.title('Loss history')
+    plt.xlabel('Iteration')
+    plt.ylabel('Loss')
+
+    plt.subplot(2, 1, 2)
+    plt.plot(stats['train_acc_history'], label='train')
+    plt.plot(stats['val_acc_history'], label='val')
+    plt.title('Classification accuracy history')
+    plt.xlabel('Epoch')
+    plt.ylabel('Clasification accuracy')
+    plt.legend()
+    plt.show()
+
+
+
+
+if __name__ == "__main__":
+    main()

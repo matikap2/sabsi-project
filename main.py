@@ -25,7 +25,7 @@ def main():
                 [1,0,1],
                 [0,0,1],
                 [0,1,0]])
-    y = np.array([[1],[1],[0],[0],[0],[1]])
+    y = np.array([[10],[9],[8],[7],[6],[5]])
     NN = NeuralNetwork.NeuralNetwork(X, y)
     for i in range (1500):
         NN.feedforward()

@@ -44,6 +44,8 @@ class DatasetLoader:
             self._input_data.append(data_row[0:3])
             self._results.append(COLOURS_MAP.get(data_row[3], COLOURS_MAP.get('Unknown')))
 
+        return self._input_data, self._results
+
     """!
     @brief Print data used to train neural network
     """
