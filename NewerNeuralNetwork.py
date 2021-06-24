@@ -175,7 +175,8 @@ class NewerNeuralNetwork:
 def main():
     DATASET_FOLDER = 'sabsi-project/datasets/'
     DATASET_COLORS = 'colors.csv'
-    DATASET_IMAGE = 'flags.png'
+    DATASET_IMAGE = 'flags.jpg'
+    DATASET_CLASSIFIERS = 'flags_classified.txt'
 
     DATASET_COLORS_LABELS = ('Red', 'Green', 'Blue', 
                             'Yellow', 'Orange', 'Pink', 
@@ -187,7 +188,10 @@ def main():
 
     image = ImageLoader(DATASET_FOLDER + DATASET_IMAGE)
     image.load_image()
-    image.print_rgb_data()
+
+    # imported_col
+    # with open(DATASET_FOLDER + DATASET_CLASSIFIERS) as file :
+        
 
     X_train = np.array(X_in[:8000])
     y_train = np.array(y_out[:8000])
