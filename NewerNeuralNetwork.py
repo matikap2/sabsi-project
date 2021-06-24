@@ -2,7 +2,11 @@ import numpy as np
 import Activation as ac
 import matplotlib.pyplot as plt
 from DatasetLoader import DatasetLoader
+from ImageLoader import ImageLoader
 
+# Implementation based on assignments from Stanford CS231n Convolutional Neural Networks for Visual Recognition course.
+# http://cs231n.stanford.edu/
+# https://cs231n.github.io/
 
 class NewerNeuralNetwork:
     def __init__(self, input_size, hidden_size, output_size, std=1e-4):
@@ -80,7 +84,7 @@ class NewerNeuralNetwork:
 
         # Gradient W1
         dhidden = np.dot(dscores, W2.T)
-        dhidden[layers['fc1_relu'] <= 0] = 0 #fc1??
+        dhidden[layers['fc1_relu'] <= 0] = 0
         grads['W1'] = np.dot(X_input.T, dhidden)
 
         # Gradient b1
@@ -93,13 +97,8 @@ class NewerNeuralNetwork:
         return grads
     
     def loss(self, X_input, y_output=None, reg=0.0):
-        N, D = X_input.shape
-
         # Forward pass, class scores for input
         layers = self._forward_pass(X_input, self.params)
-
-        # if y_output is None:
-        #     return layers['fc2_softmax']
 
         # Cross-entropy loss (Softmax loss) and regularization
         loss = self._cross_entropy_loss(X_input, y_output, self.params, layers, reg)
@@ -116,6 +115,7 @@ class NewerNeuralNetwork:
 
         num_train = X_train.shape[0]
         iterations_per_epoch = max(num_train / batch_size, 1)
+
         # Use SGD to optimize the parameters in self.model
         loss_history = []
         train_acc_history = []
@@ -140,7 +140,7 @@ class NewerNeuralNetwork:
             self.params['W2'] += -learning_rate * grads['W2']
             self.params['b2'] += -learning_rate * grads['b2']
 
-            if verbose and it % 2 == 0:
+            if verbose and it % 10 == 0:
                 print(f'iteration {it} / {num_iters}: loss {loss}')
 
             # Every epoch, check train and val accuracy and decay learning rate.
@@ -175,7 +175,8 @@ class NewerNeuralNetwork:
 def main():
     DATASET_FOLDER = 'sabsi-project/datasets/'
     DATASET_COLORS = 'colors.csv'
-    TEST_IMAGE = 'test.jpg'
+    DATASET_IMAGE = 'flags.png'
+
     DATASET_COLORS_LABELS = ('Red', 'Green', 'Blue', 
                             'Yellow', 'Orange', 'Pink', 
                             'Purple', 'Brown', 'Grey', 
@@ -184,17 +185,21 @@ def main():
     data = DatasetLoader(DATASET_FOLDER + DATASET_COLORS)
     X_in, y_out = data.load_data()
 
+    image = ImageLoader(DATASET_FOLDER + DATASET_IMAGE)
+    image.load_image()
+    image.print_rgb_data()
+
     X_train = np.array(X_in[:8000])
     y_train = np.array(y_out[:8000])
     X_val = np.array(X_in[8000:10000])
     y_val = np.array(y_out[8000:10000])
-    X_test = np.array(X_in[10000:])
-    y_test = np.array(y_out[10000:])
+    # X_test = np.array(X_in[10000:])
+    # y_test = np.array(y_out[10000:])
 
 
     nn = NewerNeuralNetwork(3, 10, len(DATASET_COLORS_LABELS))
 
-    stats = nn.train(X_train, y_train, X_val, y_val, learning_rate=7e-3, reg=1e-6, num_iters=200, verbose=False)
+    stats = nn.train(X_train, y_train, X_val, y_val, learning_rate=7e-3, reg=1e-6, num_iters=165, verbose=False)
 
     print('Final training loss: ', stats['loss_history'][-1])
 
