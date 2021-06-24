@@ -163,17 +163,6 @@ class NewerNeuralNetwork:
 
         return y_prediction
 
-    def save_model(self, file_name=None):
-        if file_name is not None:
-            with open(filename, mode='wx') as f:
-                pass
-
-        return self.params
-
-    def load_model(self, params):
-        # TODO: Add loading from file
-        self.params = params
-
 
 def main():
     DATASET_FOLDER = 'sabsi-project/datasets/'
