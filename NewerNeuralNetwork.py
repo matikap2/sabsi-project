@@ -163,8 +163,11 @@ class NewerNeuralNetwork:
 
         return y_prediction
 
-    def save_model(self):
-        # TODO: Add saving to file
+    def save_model(self, file_name=None):
+        if file_name is not None:
+            with open(filename, mode='wx') as f:
+                pass
+
         return self.params
 
     def load_model(self, params):
@@ -189,17 +192,17 @@ def main():
     image = ImageLoader(DATASET_FOLDER + DATASET_IMAGE)
     image.load_image()
 
-    # imported_col
-    # with open(DATASET_FOLDER + DATASET_CLASSIFIERS) as file :
-        
+    imported_colour = []
+    with open(DATASET_FOLDER + DATASET_CLASSIFIERS) as file :
+        imported_colour = list(map(int, list(file.read())))     
 
-    X_train = np.array(X_in[:8000])
-    y_train = np.array(y_out[:8000])
-    X_val = np.array(X_in[8000:10000])
-    y_val = np.array(y_out[8000:10000])
-    # X_test = np.array(X_in[10000:])
-    # y_test = np.array(y_out[10000:])
+    X_image = np.array(image._rgb_data)
+    y_image = np.array(imported_colour)
 
+    X_train = np.array(X_in[:9000])
+    y_train = np.array(y_out[:9000])
+    X_val = np.array(X_in[9000:])
+    y_val = np.array(y_out[9000:])
 
     nn = NewerNeuralNetwork(3, 10, len(DATASET_COLORS_LABELS))
 
@@ -214,6 +217,10 @@ def main():
     val_accuracy = (nn.predict(X_val) == y_val).mean()
 
     print(f'train accuracy: {train_accuracy} val accuracy: {val_accuracy}')
+
+    # Predict on picture
+    picture_accuracy = (nn.predict(X_image) == y_image).mean()
+    print(f'picture_accuracy: {picture_accuracy}')
 
     # plot the loss history
     plt.subplot(2, 1, 1)
